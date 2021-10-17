@@ -35,10 +35,11 @@ io.on('connection', socket => {
         const sort = { timems: 1 }
         const cursor = collection.find(query).sort(sort);
         cursor.forEach(doc => {
+            const time = moment(doc.timems).fromNow();
             message = {
                 username: doc.user,
                 text: doc.message,
-                time: doc.time
+                time: time
             }
             socket.emit('message', message);
         });
@@ -61,10 +62,9 @@ io.on('connection', socket => {
     socket.on('chatMessage', msg => {
         const user = getCurrentUser(socket.id);
         io.to(user.room).emit('message', formatMessage(user.username, msg));
-        const collection = client.db("simple-chat").collection("messages");
         // Update new message in room to database
         const time = new Date().getTime();
-        const doc = { room: user.room, user: user.username, message: msg, time: moment().format("MMMM Do YYYY, h:mm:ss a"), timems: time };
+        const doc = { room: user.room, user: user.username, message: msg, timems: time };
         collection.insertOne(doc);
     });
 
