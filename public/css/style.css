@@ -35,7 +35,7 @@ a {
     color: var(--dark-color-b);
     border: 0;
     border-radius: 5px;
-    font-size: 25px;
+    font-size: 22px;
     font-weight: bold;
 }
 
@@ -76,6 +76,7 @@ a {
     background: rgba(0, 0, 0, 0.1);
     padding: 10px;
     margin-bottom: 20px;
+    border-radius: 5px;
 }
 
 .chat-sidebar h3 {
@@ -116,6 +117,12 @@ a {
     background-color: var(--dark-color-a);
 }
 
+.chat-form-container .btn {
+    border: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
 .chat-form-container form {
     display: flex;
 }
@@ -125,6 +132,9 @@ a {
     padding: 5px;
     height: 40px;
     flex: 1;
+    border: 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
 }
 
 

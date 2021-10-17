@@ -4,16 +4,25 @@ const express = require('express');
 const socketio = require('socket.io');
 const formatMessage = require('./utils/messages');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require('./utils/users');
+const { MongoClient } = require('mongodb');
+const moment = require('moment');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
+
+const PASSWORD = "Kimhuan2.0";
+const DATABASE = "simple-chat";
+const uri = `mongodb+srv://kimhuanle:${PASSWORD}@cluster0.wfupm.mongodb.net/${DATABASE}?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 const botName = "Chat Bot";
 
+client.connect();
+const collection = client.db("simple-chat").collection("messages");
 // Run when client connect
 io.on('connection', socket => {
     socket.on('joinRoom', ({ username, room }) => {
@@ -21,9 +30,23 @@ io.on('connection', socket => {
 
         socket.join(user.room);
 
-        //  Welcome current user
-        socket.emit('message', formatMessage(botName, `Welcome to ChatBox ${user.username}!`));
+        // Get messages in room from database
+        const query = { room: room };
+        const sort = { timems: 1 }
+        const cursor = collection.find(query).sort(sort);
+        cursor.forEach(doc => {
+            message = {
+                username: doc.user,
+                text: doc.message,
+                time: doc.time
+            }
+            socket.emit('message', message);
+        });
 
+        setTimeout(() => {
+            //  Welcome current user
+            socket.emit('message', formatMessage(botName, `Welcome to ChatBox ${user.username}!`));
+        }, 100);
         // Broadcast when a user connects
         socket.broadcast.to(user.room).emit('message', formatMessage(botName, `${user.username} has joined the chat`));
 
@@ -38,6 +61,11 @@ io.on('connection', socket => {
     socket.on('chatMessage', msg => {
         const user = getCurrentUser(socket.id);
         io.to(user.room).emit('message', formatMessage(user.username, msg));
+        const collection = client.db("simple-chat").collection("messages");
+        // Update new message in room to database
+        const time = new Date().getTime();
+        const doc = { room: user.room, user: user.username, message: msg, time: moment().format("MMMM Do YYYY, h:mm:ss a"), timems: time };
+        collection.insertOne(doc);
     });
 
     // Runs when a client disconnects
